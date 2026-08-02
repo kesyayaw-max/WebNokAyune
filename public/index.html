@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>NokAyune – Catering Rumahan Purwokerto</title>
-  <meta name="description" content="NokAyune – catering rumahan di Purwokerto. Nasi box, lauk pauk, snack & kue, dan minuman fresh, halal, dipesan online, bayar QRIS, antar ke rumah atau acara Anda."/>
-  <meta property="og:title" content="NokAyune – Catering Rumahan Purwokerto"/>
-  <meta property="og:description" content="Masakan rumahan fresh & halal, pesan online, bayar QRIS, antar gratis area Purwokerto."/>
+  <title id="pageTitle">NokAyune – Catering Rumahan</title>
+  <meta name="description" id="metaDesc" content="NokAyune – catering rumahan fresh & halal. Nasi box, lauk pauk, snack, dan minuman. Pesan online, bayar QRIS, antar ke rumah atau acara Anda."/>
+  <meta property="og:title" id="ogTitle" content="NokAyune – Catering Rumahan"/>
+  <meta property="og:description" id="ogDesc" content="Masakan rumahan fresh & halal, pesan online, bayar QRIS, antar gratis."/>
   <meta property="og:type" content="website"/>
   <meta property="og:image" content="/assets/og-image.jpg"/>
   <meta name="theme-color" content="#2F5233"/>
@@ -15,6 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="style.css"/>
+  <link rel="manifest" href="/manifest.json"/>
 </head>
 <body>
 
@@ -48,6 +49,22 @@
   </div>
 </nav>
 
+<!-- Mobile Nav Drawer -->
+<div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="closeMobileMenu()"></div>
+<div class="mobile-nav-drawer" id="mobileNavDrawer">
+  <a href="#" class="nav-link active" data-page="home" onclick="showPage('home');closeMobileMenu()">🏠 Beranda</a>
+  <a href="#" class="nav-link" data-page="menu" onclick="showPage('menu');closeMobileMenu()">🍱 Menu</a>
+  <a href="#" class="nav-link" data-page="about" onclick="showPage('about');closeMobileMenu()">📖 Tentang</a>
+  <a href="#" class="nav-link" data-page="contact" onclick="showPage('contact');closeMobileMenu()">📞 Kontak</a>
+  <a href="#" class="nav-link" data-page="track" onclick="showPage('track');closeMobileMenu()">🔍 Lacak Pesanan</a>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay" style="display:none">
+  <div class="spinner"></div>
+  <p id="loadingText">Memproses...</p>
+</div>
+
 <!-- ===== HOME PAGE ===== -->
 <div id="page-home" class="page active">
 
@@ -56,6 +73,7 @@
     <div class="hero-bg">
       <div class="hero-blob blob1"></div>
       <div class="hero-blob blob2"></div>
+      <div class="hero-blob blob3"></div>
       <div class="hero-overlay"></div>
       <div class="floating-leaves">
         <span class="leaf leaf1">🌿</span>
@@ -65,7 +83,7 @@
     </div>
     <div class="hero-content">
       <p class="hero-eyebrow">Catering Rumahan Purwokerto</p>
-      <h1 class="hero-title">Masakan Rumah,<br/><em>Cita Rasa Istimewa</em></h1>
+      <h1 class="hero-title">Masakan Rumah,<br/><em class="gradient-text">Cita Rasa Istimewa</em></h1>
       <p class="hero-desc">Sajian penuh kasih dari dapur NokAyune – fresh, sehat, dan dibuat dengan bahan pilihan untuk keluarga & acara spesial Anda.</p>
       <div class="hero-cta">
         <button class="btn-primary" onclick="showPage('menu')">Lihat Menu Kami</button>
@@ -321,7 +339,7 @@
           <div class="form-group"><label>Nama Lengkap</label><input type="text" placeholder="Nama Anda"/></div>
           <div class="form-group"><label>No. WhatsApp</label><input type="tel" placeholder="08xxxxxxxxxx"/></div>
           <div class="form-group"><label>Pesan</label><textarea rows="4" placeholder="Ada yang ingin ditanyakan?"></textarea></div>
-          <button class="btn-primary" onclick="sendContactWA()">Kirim via WhatsApp</button>
+          <button class="btn-primary" onclick="submitContactForm()">Kirim via WhatsApp</button>
         </div>
       </div>
     </div>
@@ -411,93 +429,25 @@
         <p>Total yang harus dibayar:</p>
         <h2 id="payAmount">Rp 0</h2>
       </div>
-      <div class="qris-wrap">
+      <div class="qris-wrap" id="qrisWrap">
         <p class="qris-label">Scan QRIS di bawah ini</p>
-        <div class="qris-code">
-          <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width="200" height="200">
-            <!-- Simulated QRIS pattern -->
-            <rect width="200" height="200" fill="white"/>
-            <!-- Corner squares -->
-            <rect x="10" y="10" width="50" height="50" fill="none" stroke="#1C1C1C" stroke-width="6"/>
-            <rect x="20" y="20" width="30" height="30" fill="#1C1C1C"/>
-            <rect x="140" y="10" width="50" height="50" fill="none" stroke="#1C1C1C" stroke-width="6"/>
-            <rect x="150" y="20" width="30" height="30" fill="#1C1C1C"/>
-            <rect x="10" y="140" width="50" height="50" fill="none" stroke="#1C1C1C" stroke-width="6"/>
-            <rect x="20" y="150" width="30" height="30" fill="#1C1C1C"/>
-            <!-- Data pixels (simulated) -->
-            <rect x="80" y="10" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="96" y="10" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="112" y="10" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="80" y="26" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="104" y="26" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="80" y="42" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="88" y="42" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="112" y="42" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="10" y="80" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="26" y="80" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="42" y="80" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="80" y="80" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="96" y="80" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="104" y="80" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="120" y="80" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="136" y="80" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="152" y="80" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="168" y="80" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="184" y="80" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="10" y="96" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="42" y="96" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="80" y="96" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="104" y="96" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="120" y="96" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="160" y="96" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="184" y="96" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="10" y="112" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="18" y="112" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="34" y="112" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="80" y="112" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="96" y="112" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="112" y="112" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="136" y="112" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="168" y="112" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="80" y="128" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="104" y="128" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="128" y="128" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="152" y="128" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="176" y="128" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="80" y="144" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="88" y="144" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="120" y="144" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="136" y="144" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="184" y="144" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="80" y="160" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="104" y="160" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="112" y="160" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="152" y="160" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="80" y="176" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="96" y="176" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="120" y="176" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="160" y="176" width="8" height="8" fill="#1C1C1C"/>
-            <rect x="176" y="176" width="8" height="8" fill="#1C1C1C"/>
-            <!-- Center label -->
-            <rect x="82" y="82" width="36" height="36" rx="4" fill="#4A7C59"/>
-            <text x="100" y="106" text-anchor="middle" font-size="18" fill="white">🍃</text>
-          </svg>
+        <div class="qris-code" id="qrisCodeBox">
+          <div class="qris-loading">Menyiapkan QRIS…</div>
         </div>
-        <p class="qris-name">NokAyune – Catering Rumahan</p>
-        <p class="qris-sub">a.n. Ayune Rahayu Pratiwi</p>
+        <p class="qris-name" id="qrisMerchantName">Toko</p>
+        <p class="qris-sub">Nominal sudah otomatis terkunci sesuai total belanja — aman dari salah ketik nominal.</p>
         <div class="qris-logos">
           <span class="qris-logo-item">GoPay</span>
           <span class="qris-logo-item">OVO</span>
           <span class="qris-logo-item">Dana</span>
           <span class="qris-logo-item">ShopeePay</span>
-          <span class="qris-logo-item">BCA</span>
-          <span class="qris-logo-item">BNI</span>
+          <span class="qris-logo-item">Bank apa saja</span>
         </div>
       </div>
       <div class="payment-steps">
         <div class="pay-step">✅ Buka aplikasi e-wallet atau m-banking Anda</div>
         <div class="pay-step">✅ Pilih fitur "Scan QR / QRIS"</div>
-        <div class="pay-step">✅ Scan kode di atas & masukkan nominal</div>
+        <div class="pay-step">✅ Scan kode di atas — nominal sudah otomatis terisi</div>
         <div class="pay-step">✅ Screenshot bukti pembayaran</div>
       </div>
       <button class="btn-primary full" onclick="confirmPayment()">Saya Sudah Bayar – Kirim ke WhatsApp ✓</button>
@@ -568,6 +518,7 @@
               <option value="cooking">Dimasak</option>
               <option value="delivered">Dikirim</option>
               <option value="done">Selesai</option>
+              <option value="cancelled">Dibatalkan</option>
             </select>
             <select id="ordersRegionFilter" onchange="filterOrdersByRegion(this.value)">
               <option value="all">Semua Wilayah</option>
@@ -646,6 +597,22 @@
           <div class="form-group"><label>Jam Buka</label><input type="text" id="set-open_hours"/></div>
           <div class="form-group"><label>Minimum Order (porsi)</label><input type="number" id="set-min_order"/></div>
           <button class="btn-primary" onclick="saveSettings()">Simpan Pengaturan</button>
+        </div>
+        <div class="settings-form" style="margin-top:24px;" id="qrisPanel">
+          <h3>Pembayaran QRIS <small style="font-size:0.7rem;color:var(--gray);font-weight:500;">(khusus owner)</small></h3>
+          <p style="font-size:0.85rem;margin-bottom:12px;">Tidak perlu akun payment gateway berbayar. Tempel teks QRIS statis milik kamu sendiri di sini — nominal akan otomatis terkunci sesuai total belanja pelanggan, jadi tidak bisa diketik lebih kecil dari harga asli.</p>
+          <details style="margin-bottom:18px;font-size:0.83rem;color:var(--gray);">
+            <summary style="cursor:pointer;font-weight:600;color:var(--ink);">Cara dapetin teks QRIS-nya ▾</summary>
+            <ol style="margin:10px 0 0 18px;line-height:1.85;">
+              <li>Buka aplikasi pemindai QR apa saja di HP (banyak yang gratis di Play Store/App Store, cari "QR code scanner").</li>
+              <li>Scan gambar QRIS kamu yang biasa dipajang / dari aplikasi e-wallet atau m-banking kamu (yang statis, bukan yang sudah ada nominalnya).</li>
+              <li>Hasilnya berupa teks panjang diawali <code>000201...</code> — salin (copy) semua teks itu.</li>
+              <li>Tempel di kotak bawah ini, lalu klik "Simpan & Tes QRIS" untuk lihat pratinjaunya.</li>
+            </ol>
+          </details>
+          <div class="form-group"><label>Teks QRIS Statis</label><textarea id="set-qris_static" rows="4" placeholder="000201010211..." style="font-family:monospace;font-size:0.8rem;"></textarea></div>
+          <button class="btn-primary" onclick="saveQrisSettings()">Simpan & Tes QRIS</button>
+          <div id="qrisTestResult" style="margin-top:20px;"></div>
         </div>
         <div class="settings-form" style="margin-top:24px;" id="regionsPanel">
           <h3>Kelola Wilayah <small style="font-size:0.7rem;color:var(--gray);font-weight:500;">(khusus owner)</small></h3>
