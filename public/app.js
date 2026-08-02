@@ -13,6 +13,7 @@ let socket = null;
 let regions = [];             // active regions (public, for customers)
 let adminRegions = [];        // all regions incl. inactive (owner only)
 let currentRegionId = null;   // wilayah currently selected by the customer
+let loadingTimer = null;      // debounce loading overlay
 
 // ================== THEME (dark mode) ==================
 (function initTheme() {
@@ -29,18 +30,35 @@ function toggleTheme() {
   if (btn) btn.textContent = next === 'dark' ? '☀️' : '🌙';
 }
 
+// ================== LOADING OVERLAY ==================
+function showLoading(msg) {
+  const ov = document.getElementById('loadingOverlay');
+  const txt = document.getElementById('loadingText');
+  if (ov) ov.style.display = 'flex';
+  if (txt) txt.textContent = msg || 'Memproses...';
+  clearTimeout(loadingTimer);
+}
+function hideLoading() {
+  loadingTimer = setTimeout(() => {
+    const ov = document.getElementById('loadingOverlay');
+    if (ov) ov.style.display = 'none';
+  }, 200);
+}
+
 // ================== TOAST ==================
+const toastIcons = { error: '⚠️', info: 'ℹ️', success: '✅' };
 function showToast(message, type) {
   const stack = document.getElementById('toastStack');
   if (!stack) return;
   const toast = document.createElement('div');
   toast.className = 'toast' + (type ? ' toast-' + type : '');
-  toast.textContent = message;
+  const icon = toastIcons[type] || '';
+  toast.innerHTML = `${icon ? `<span class="toast-icon">${icon}</span>` : ''}${message}`;
   stack.appendChild(toast);
   setTimeout(() => {
     toast.style.animation = 'toastOut 0.25s ease forwards';
     setTimeout(() => toast.remove(), 250);
-  }, 2600);
+  }, 3200);
 }
 
 // ================== API HELPER ==================
@@ -135,8 +153,32 @@ function showPage(name) {
   if (name === 'admin') { if (!isAdminLoggedIn()) { showPage('admin-login'); return; } renderAdminDashboard(); }
   updateCartCount();
 }
-function toggleMenu() { document.getElementById('navLinks').classList.toggle('open'); }
-function scrollToSection(id) { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }); }
+function toggleMenu() {
+  const drawer = document.getElementById('mobileNavDrawer');
+  const overlay = document.getElementById('mobileNavOverlay');
+  const hamburger = document.getElementById('hamburger');
+  const isOpen = drawer.classList.contains('show');
+  if (isOpen) { closeMobileMenu(); }
+  else {
+    drawer.classList.add('show');
+    overlay.classList.add('show');
+    hamburger.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+}
+function closeMobileMenu() {
+  const drawer = document.getElementById('mobileNavDrawer');
+  const overlay = document.getElementById('mobileNavOverlay');
+  const hamburger = document.getElementById('hamburger');
+  drawer?.classList.remove('show');
+  overlay?.classList.remove('show');
+  hamburger?.classList.remove('open');
+  document.body.style.overflow = '';
+}
+function scrollToSection(id) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  closeMobileMenu();
+}
 
 // ================== MENU (public) ==================
 function skeletonCards(n) {
@@ -228,7 +270,13 @@ function addToCart(id) {
   if (existing) existing.qty++;
   else cart.push({ ...item, qty: 1 });
   updateCartCount();
-  showToast(`✓ ${item.name} ditambahkan ke keranjang`);
+  // Cart bump animation
+  const cartBtn = document.querySelector('.cart-btn');
+  if (cartBtn) { cartBtn.classList.remove('cart-bump'); void cartBtn.offsetWidth; cartBtn.classList.add('cart-bump'); }
+  // Flash the add button
+  const addBtns = document.querySelectorAll('.add-btn');
+  addBtns.forEach(b => { if (b.onclick && b.onclick.toString().includes(id)) { b.classList.add('added'); setTimeout(() => b.classList.remove('added'), 600); } });
+  showToast(`${item.name} ditambahkan ke keranjang`);
 }
 
 function updateCartCount() {
@@ -365,17 +413,24 @@ async function goToPayment() {
 
 // ================== PAYMENT ==================
 async function initiatePayment(orderId) {
-  const qrisWrap = document.querySelector('.qris-wrap');
+  const codeBox = document.getElementById('qrisCodeBox');
+  const merchantNameEl = document.getElementById('qrisMerchantName');
   const payNote = document.querySelector('.pay-note');
   try {
-    const res = await apiFetch('/api/payment/create-transaction/' + orderId, { method: 'POST' });
-    if (res.simulated) {
-      // Demo mode: static QR + manual confirm button (already in markup)
-      if (payNote) payNote.textContent = 'Mode demo: belum terhubung ke payment gateway sungguhan. Klik tombol di bawah untuk mensimulasikan pembayaran berhasil.';
-    } else if (res.redirect_url) {
-      if (qrisWrap) qrisWrap.innerHTML = `<p style="margin-bottom:16px;">Pembayaran akan dibuka di tab baru melalui Midtrans.</p>
-        <a class="btn-primary" href="${res.redirect_url}" target="_blank" rel="noopener">Buka Halaman Pembayaran →</a>
-        <p style="margin-top:16px;font-size:0.85rem;color:var(--gray);">Setelah membayar, kembali ke tab ini dan klik tombol di bawah untuk mengecek status.</p>`;
+    const res = await apiFetch('/api/payment/qris/' + orderId);
+    if (res.configured) {
+      if (codeBox) codeBox.innerHTML = `<img src="${res.qrDataUrl}" alt="QRIS pembayaran" style="width:100%;max-width:220px;display:block;"/>`;
+      if (merchantNameEl) merchantNameEl.textContent = res.merchantName || 'Toko';
+      if (payNote) payNote.textContent = 'Setelah transfer, klik tombol di atas untuk konfirmasi via WhatsApp beserta bukti bayar. Tim kami akan cek & konfirmasi pesanan Anda secara manual.';
+    } else {
+      // Owner belum pasang QRIS — jangan tampilkan kode palsu, langsung arahkan ke WA.
+      const wrap = document.getElementById('qrisWrap');
+      if (wrap) wrap.innerHTML = `<div style="text-align:center;padding:20px 0;">
+        <p style="font-size:2rem;margin-bottom:12px;">💬</p>
+        <p style="font-weight:600;color:var(--ink);margin-bottom:8px;">QRIS belum diatur oleh toko ini</p>
+        <p style="font-size:0.88rem;color:var(--gray);">Silakan lanjutkan lewat tombol di bawah — Anda akan diarahkan ke WhatsApp untuk atur pembayaran & konfirmasi pesanan langsung dengan tim kami.</p>
+      </div>`;
+      if (payNote) payNote.textContent = 'Klik tombol di atas untuk lanjut konfirmasi pesanan & pembayaran via WhatsApp.';
     }
   } catch (e) {
     showToast(e.message, 'error');
@@ -440,6 +495,31 @@ function sendContactWA() {
   const region = regions.find(r => r.id === currentRegionId);
   const waNumber = (region?.wa_number || storeSettings.owner_wa || '6281234567890').replace(/\D/g, '');
   window.open(`https://wa.me/${waNumber}`, '_blank');
+}
+
+async function submitContactForm() {
+  const nameInput = document.querySelector('#page-contact input[placeholder="Nama Anda"]');
+  const phoneInput = document.querySelector('#page-contact input[placeholder="08xxxxxxxxxx"]');
+  const msgInput = document.querySelector('#page-contact textarea');
+  const name = nameInput?.value.trim();
+  const phone = phoneInput?.value.trim();
+  const message = msgInput?.value.trim();
+
+  if (!name || !phone || !message) { showToast('Lengkapi nama, nomor WhatsApp, dan pesan Anda.', 'error'); return; }
+  const btn = document.querySelector('#page-contact .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Mengirim...'; }
+  try {
+    const res = await apiFetch('/api/contact', { method: 'POST', body: JSON.stringify({ name, phone, message }) });
+    if (nameInput) nameInput.value = '';
+    if (phoneInput) phoneInput.value = '';
+    if (msgInput) msgInput.value = '';
+    showToast('Pesan terkirim! Membuka WhatsApp...');
+    if (res.waUrl) window.open(res.waUrl, '_blank');
+  } catch (e) {
+    showToast(e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Kirim via WhatsApp'; }
+  }
 }
 
 // ================== TRACK ORDER ==================
@@ -516,6 +596,8 @@ async function renderAdminDashboard() {
   if (staffPanel) staffPanel.style.display = role === 'owner' ? '' : 'none';
   const regionsPanel = document.getElementById('regionsPanel');
   if (regionsPanel) regionsPanel.style.display = role === 'owner' ? '' : 'none';
+  const qrisPanel = document.getElementById('qrisPanel');
+  if (qrisPanel) qrisPanel.style.display = role === 'owner' ? '' : 'none';
   await loadAdminRegions();
   adminTab('orders', document.querySelector('.admin-nav-item'));
 }
@@ -638,26 +720,43 @@ function renderPagination(page, totalPages) {
 
 function orderCard(o) {
   const itemsText = o.items.map(it => `${it.name} ×${it.qty}`).join(', ');
+  const canCancel = !['cancelled', 'done', 'delivered'].includes(o.status);
   return `<div class="order-card">
     <div class="order-header">
       <span class="order-id">#${o.id} • ${new Date(o.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</span>
-      <span class="order-status status-${o.status}">${statusLabel(o.status)}</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="order-status status-${o.status}">${statusLabel(o.status)}</span>
+        <span class="${o.payment_status === 'paid' ? 'pay-paid' : 'pay-unpaid'}">${o.payment_status === 'paid' ? 'Lunas' : 'Belum bayar'}</span>
+      </div>
     </div>
     <div class="order-customer">${o.name} — ${o.phone}</div>
-    <div class="order-details">${o.address}${o.region_name ? ` · 📍 ${o.region_name}` : ''}<br/>🍽️ ${itemsText}<br/>💳 ${o.payment_status === 'paid' ? 'Sudah dibayar' : 'Belum dibayar'}</div>
+    <div class="order-details">${o.address}${o.region_name ? ` · 📍 ${o.region_name}` : ''}<br/>🍽️ ${itemsText}</div>
     <div class="order-actions">
       <span class="order-total">${fmtRp(o.total)}</span>
       ${o.status === 'pending' ? `<button class="order-btn confirm" onclick="updateOrderStatus('${o.id}','confirmed')">Konfirmasi</button>` : ''}
       ${o.status === 'confirmed' ? `<button class="order-btn cook" onclick="updateOrderStatus('${o.id}','cooking')">Mulai Masak</button>` : ''}
       ${o.status === 'cooking' ? `<button class="order-btn deliver" onclick="updateOrderStatus('${o.id}','delivered')">Kirim</button>` : ''}
       ${o.status === 'delivered' ? `<button class="order-btn done" onclick="updateOrderStatus('${o.id}','done')">Selesai</button>` : ''}
-      <button class="order-btn wa" onclick="waToCustomer('${o.id}')">💬 WA Pelanggan</button>
+      ${canCancel ? `<button class="order-btn cancel" onclick="cancelOrder('${o.id}')">✕ Batal</button>` : ''}
+      <button class="order-btn wa" onclick="waToCustomer('${o.id}')">💬 WA</button>
     </div>
   </div>`;
 }
 
+async function cancelOrder(id) {
+  if (!confirm('Batalkan pesanan ini? Stok akan dikembalikan ke menu.')) return;
+  try {
+    await apiFetch(`/api/orders/${id}/cancel`, { method: 'PATCH' });
+    renderAdminOrders(ordersFilter, ordersPage);
+    showToast('Pesanan dibatalkan — stok dikembalikan.');
+    loadMenu();
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
 function statusLabel(s) {
-  return { pending: 'Menunggu', confirmed: 'Dikonfirmasi', cooking: 'Dimasak', delivered: 'Dikirim', done: 'Selesai' }[s] || s;
+  return { pending: 'Menunggu', confirmed: 'Dikonfirmasi', cooking: 'Dimasak', delivered: 'Dikirim', done: 'Selesai', cancelled: 'Dibatalkan' }[s] || s;
 }
 
 async function updateOrderStatus(id, status) {
@@ -837,6 +936,8 @@ async function loadSettingsForm() {
     document.getElementById('set-address').value = storeSettings.address || '';
     document.getElementById('set-open_hours').value = storeSettings.open_hours || '';
     document.getElementById('set-min_order').value = storeSettings.min_order || '';
+    const qrisEl = document.getElementById('set-qris_static');
+    if (qrisEl) qrisEl.value = storeSettings.qris_static || '';
   } catch (e) { /* non-fatal */ }
   if (currentAdminRole() === 'owner') loadStaffList();
 }
@@ -856,6 +957,35 @@ async function saveSettings() {
     showToast('Pengaturan disimpan');
   } catch (e) {
     showToast(e.message, 'error');
+  }
+}
+
+async function saveQrisSettings() {
+  const qrisText = document.getElementById('set-qris_static').value.trim();
+  const resultEl = document.getElementById('qrisTestResult');
+  resultEl.innerHTML = '<p style="color:var(--gray);font-size:0.85rem;">Menyimpan & menguji...</p>';
+  try {
+    await apiFetch('/api/admin/settings', { method: 'PUT', body: JSON.stringify({ qris_static: qrisText }) });
+    storeSettings.qris_static = qrisText;
+
+    if (!qrisText) {
+      resultEl.innerHTML = '<p style="color:var(--gray);font-size:0.85rem;">QRIS dikosongkan — halaman pembayaran pelanggan akan otomatis pakai jalur konfirmasi WhatsApp biasa.</p>';
+      showToast('Pengaturan QRIS disimpan');
+      return;
+    }
+    const test = await apiFetch('/api/payment/qris-test', { method: 'POST', body: JSON.stringify({ qris_static: qrisText, amount: 15000 }) });
+    resultEl.innerHTML = `
+      <div style="background:var(--leaf-light);border-radius:var(--radius-sm);padding:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+        <img src="${test.qrDataUrl}" alt="Pratinjau QRIS" style="width:130px;height:130px;border-radius:8px;background:white;padding:6px;"/>
+        <div>
+          <p style="font-weight:700;color:var(--leaf-dark);margin-bottom:4px;">✓ QRIS valid & tersimpan</p>
+          <p style="font-size:0.82rem;color:var(--gray);">Ini contoh untuk nominal Rp 15.000 — coba scan pakai HP kamu untuk pastikan nominalnya kebaca benar sebelum dipakai pelanggan.</p>
+        </div>
+      </div>`;
+    showToast('QRIS disimpan & valid ✓');
+  } catch (e) {
+    resultEl.innerHTML = `<p style="color:var(--clay);font-size:0.85rem;">✗ ${e.message}</p>`;
+    showToast('QRIS belum valid, dicek lagi ya', 'error');
   }
 }
 
@@ -954,6 +1084,20 @@ window.addEventListener('scroll', () => {
   nav.style.boxShadow = window.scrollY > 20 ? '0 4px 24px rgba(36,31,25,0.08)' : 'none';
 });
 
+// ================== SCROLL REVEAL ==================
+function initScrollReveal() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+}
+
 // ================== INIT ==================
 document.addEventListener('DOMContentLoaded', async () => {
   const btn = document.getElementById('themeToggle');
@@ -963,9 +1107,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadMenu();
   updateCartCount();
   if (isAdminLoggedIn()) connectSocket();
+
+  // Form field validation listeners
   ['co-name', 'co-phone', 'co-address', 'co-time'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('input', () => validateField(id, 'fg-' + id, true));
+  });
+
+  // Scroll reveal
+  initScrollReveal();
+
+  // Navbar scroll effect
+  window.addEventListener('scroll', () => {
+    const nav = document.getElementById('navbar');
+    if (!nav) return;
+    nav.classList.toggle('scrolled', window.scrollY > 20);
+  }, { passive: true });
+
+  // Close mobile menu on resize
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) closeMobileMenu();
   });
 });
