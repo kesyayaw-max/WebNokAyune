@@ -43,7 +43,10 @@
       <li><a href="#" onclick="showPage('myorders')" class="nav-link" data-page="myorders" id="navMyOrders" style="display:none;">Pesanan Saya</a></li>
     </ul>
     <div class="nav-actions">
-      <button class="theme-toggle" id="custBtn" onclick="showPage('customer-login')" style="background:var(--card);border:1.5px solid var(--card-border);border-radius:50%;width:40px;height:40px;cursor:pointer;font-size:1rem;" title="Akun Saya">👤</button>
+      <button class="cust-nav-btn" id="custBtn" onclick="showPage('customer-login')" title="Akun Saya">
+        <span class="cust-nav-icon">👤</span>
+        <span class="cust-nav-label">Akun</span>
+      </button>
       <div class="region-picker" title="Wilayah pengiriman">
         <span class="region-picker-icon">📍</span>
         <select id="regionSelect" class="region-select" onchange="changeRegion(this.value)" aria-label="Pilih wilayah pengiriman"></select>
