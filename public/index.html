@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title id="pageTitle">NokAyune – Catering Rumahan</title>
+  <meta name="description" id="metaDesc" content="NokAyune – catering rumahan fresh & halal. Nasi box, lauk pauk, snack, dan minuman. Pesan online, bayar QRIS, antar ke rumah atau acara Anda."/>
+  <meta property="og:title" id="ogTitle" content="NokAyune – Catering Rumahan"/>
+  <meta property="og:description" id="ogDesc" content="Masakan rumahan fresh & halal, pesan online, bayar QRIS, antar gratis."/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:image" content="/assets/og-image.jpg"/>
+  <meta name="theme-color" content="#2F5233"/>
+  <link rel="icon" type="image/png" href="/favicon.png"/>
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="manifest" href="/manifest.json"/>
+</head>
+<body>
+
+<!-- Scroll Progress Bar -->
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<!-- Promo Banner (editable via admin settings) -->
+<div class="promo-banner" id="promoBanner" style="display:none;" onclick="handlePromoClick()">
+  <span id="promoBannerText">🎉 Promo spesial! Pesan hari ini dapat diskon!</span>
+  <button class="promo-close" onclick="event.stopPropagation();dismissPromo()">✕</button>
+</div>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar" id="navbar">
+  <div class="nav-container">
+    <a href="#" class="nav-logo" onclick="showPage('home')">
+      <img src="/assets/logo-nav.png" alt="NokAyune Kuliner" class="logo-mark"/>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#" onclick="showPage('home')" class="nav-link active" data-page="home">Beranda</a></li>
+      <li><a href="#" onclick="showPage('menu')" class="nav-link" data-page="menu">Menu</a></li>
+      <li><a href="#" onclick="showPage('about')" class="nav-link" data-page="about">Tentang</a></li>
+      <li><a href="#" onclick="showPage('contact')" class="nav-link" data-page="contact">Kontak</a></li>
+      <li><a href="#" onclick="showPage('track')" class="nav-link" data-page="track">Lacak Pesanan</a></li>
+      <li><a href="#" onclick="showPage('myorders')" class="nav-link" data-page="myorders" id="navMyOrders" style="display:none;">Pesanan Saya</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="cust-nav-btn" id="custBtn" onclick="showPage('customer-login')" title="Akun Saya">
+        <span class="cust-nav-icon">👤</span>
+        <span class="cust-nav-label">Akun</span>
+      </button>
+      <div class="region-picker" title="Wilayah pengiriman">
+        <span class="region-picker-icon">📍</span>
+        <select id="regionSelect" class="region-select" onchange="changeRegion(this.value)" aria-label="Pilih wilayah pengiriman"></select>
+      </div>
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Ganti mode terang/gelap" title="Ganti tampilan terang/gelap">🌙</button>
+      <button class="cart-btn" onclick="showPage('cart')" aria-label="Buka keranjang belanja">
+        <span class="cart-icon">🛒</span>
+        <span class="cart-count" id="cartCount">0</span>
+      </button>
+      <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Buka menu navigasi">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile Nav Drawer -->
+<div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="closeMobileMenu()"></div>
+<div class="mobile-nav-drawer" id="mobileNavDrawer">
+  <a href="#" class="nav-link active" data-page="home" onclick="showPage('home');closeMobileMenu()">🏠 Beranda</a>
+  <a href="#" class="nav-link" data-page="menu" onclick="showPage('menu');closeMobileMenu()">🍱 Menu</a>
+  <a href="#" class="nav-link" data-page="about" onclick="showPage('about');closeMobileMenu()">📖 Tentang</a>
+  <a href="#" class="nav-link" data-page="contact" onclick="showPage('contact');closeMobileMenu()">📞 Kontak</a>
+  <a href="#" class="nav-link" data-page="track" onclick="showPage('track');closeMobileMenu()">🔍 Lacak Pesanan</a>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay" style="display:none">
+  <div class="spinner"></div>
+  <p id="loadingText">Memproses...</p>
+</div>
+
+<!-- ===== HOME PAGE ===== -->
+<div id="page-home" class="page active">
+
+  <!-- Hero Banner -->
+  <div class="hero-banner" id="heroBanner" style="display:none;">
+    <img id="heroBannerImg" src="" alt="" style="width:100%;max-height:420px;object-fit:cover;"/>
+    <div class="hero-banner-overlay"></div>
+    <div class="hero-banner-content">
+      <h2 id="heroBannerTitle">Selamat Datang di NokAyune</h2>
+      <a id="heroBannerLink" href="#" class="btn-primary">Lihat Menu</a>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-bg">
+      <div class="hero-blob blob1"></div>
+      <div class="hero-blob blob2"></div>
+      <div class="hero-blob blob3"></div>
+      <div class="hero-overlay"></div>
+      <div class="floating-leaves">
+        <span class="leaf leaf1">🌿</span>
+        <span class="leaf leaf2">🌿</span>
+        <span class="leaf leaf3">🍃</span>
+      </div>
+    </div>
+    <div class="hero-content">
+      <p class="hero-eyebrow">Catering Rumahan Purwokerto</p>
+      <h1 class="hero-title">Masakan Rumah,<br/><em class="gradient-text">Cita Rasa Istimewa</em></h1>
+      <p class="hero-desc">Sajian penuh kasih dari dapur NokAyune – fresh, sehat, dan dibuat dengan bahan pilihan untuk keluarga & acara spesial Anda.</p>
+      <div class="hero-cta">
+        <button class="btn-primary" onclick="showPage('menu')">Lihat Menu Kami</button>
+        <button class="btn-outline" onclick="scrollToSection('how')">Cara Pesan</button>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><span class="stat-num" id="heroTotalOrders">500+</span><span class="stat-label">Pesanan</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><span class="stat-icon">⭐</span><span class="stat-label">Rating 4.9</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><span class="stat-icon">🌿</span><span class="stat-label">100% Halal</span></div>
+      </div>
+    </div>
+    <div class="hero-image-wrap">
+      <div class="hero-dish-card">
+        <div class="leaf-frame" style="width:220px;margin:0 auto;">
+          <span class="dish-img">🍱</span>
+          <div class="dish-badge">Terlaris Hari Ini</div>
+        </div>
+        <p class="dish-name" id="heroTopMenu">Paket Nasi Box Spesial</p>
+        <p class="dish-price">Rp 25.000 / porsi</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Categories -->
+  <section class="section-categories">
+    <div class="container">
+      <div class="section-header">
+        <p class="eyebrow">Pilihan Kami</p>
+        <h2>Kategori Menu</h2>
+      </div>
+      <div class="cat-grid">
+        <div class="cat-card" onclick="filterMenu('nasi-box')">
+          <div class="cat-icon">🍱</div>
+          <h3>Nasi Box</h3>
+          <p>Paket lengkap lauk + nasi</p>
+        </div>
+        <div class="cat-card" onclick="filterMenu('lauk')">
+          <div class="cat-icon">🍗</div>
+          <h3>Lauk Pauk</h3>
+          <p>Aneka lauk rumahan segar</p>
+        </div>
+        <div class="cat-card" onclick="filterMenu('snack')">
+          <div class="cat-icon">🧁</div>
+          <h3>Snack & Kue</h3>
+          <p>Camilan & kue tradisional</p>
+        </div>
+        <div class="cat-card" onclick="filterMenu('minuman')">
+          <div class="cat-icon">🥤</div>
+          <h3>Minuman</h3>
+          <p>Minuman segar pilihan</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Menu -->
+  <section class="section-featured">
+    <div class="container">
+      <div class="section-header">
+        <p class="eyebrow">Menu Unggulan</p>
+        <h2>Yang Paling Disukai</h2>
+        <a href="#" class="see-all" onclick="showPage('menu')">Lihat Semua →</a>
+      </div>
+      <div class="menu-grid" id="featuredGrid"></div>
+    </div>
+    <svg class="wave-divider bottom" viewBox="0 0 1440 56" preserveAspectRatio="none" aria-hidden="true"><path d="M0,28 C240,56 480,0 720,14 C960,28 1200,56 1440,28 L1440,56 L0,56 Z" style="fill:var(--cream-dark)"/></svg>
+  </section>
+
+  <!-- How to Order -->
+  <section class="section-how" id="how">
+    <div class="container">
+      <div class="section-header center">
+        <p class="eyebrow">Mudah & Cepat</p>
+        <h2>Cara Pesan</h2>
+      </div>
+      <div class="how-steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-icon">🛒</div>
+          <h3>Pilih Menu</h3>
+          <p>Jelajahi menu dan tambahkan ke keranjang sesuai selera</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-icon">📋</div>
+          <h3>Isi Data</h3>
+          <p>Lengkapi nama, alamat pengiriman, dan waktu pengiriman</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-icon">💳</div>
+          <h3>Bayar QRIS</h3>
+          <p>Scan QRIS dan bayar dengan mudah via e-wallet atau m-banking</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-icon">✅</div>
+          <h3>Konfirmasi WA</h3>
+          <p>Kirim bukti bayar ke WhatsApp kami, pesanan segera diproses</p>
+        </div>
+      </div>
+    </div>
+    <svg class="wave-divider bottom" viewBox="0 0 1440 56" preserveAspectRatio="none" aria-hidden="true"><path d="M0,30 C240,4 480,52 720,30 C960,8 1200,44 1440,20 L1440,56 L0,56 Z" style="fill:var(--cream)"/></svg>
+  </section>
+  <section class="section-testimonials">
+    <div class="container">
+      <div class="section-header center">
+        <p class="eyebrow">Kata Pelanggan</p>
+        <h2>Mereka Sudah Merasakan</h2>
+      </div>
+      <div class="testi-grid" id="testiGrid">
+        <div class="testi-card"><div class="testi-stars">★★★★★</div><p>"Makanannya enak banget, berasa masak sendiri di rumah!"</p><div class="testi-author"><span class="testi-avatar">S</span><div><strong>Siti Rahayu</strong><small>Pelanggan</small></div></div></div>
+        <div class="testi-card featured-testi"><div class="testi-stars">★★★★★</div><p>"Sudah 3x pesan buat acara kantor, selalu on time!"</p><div class="testi-author"><span class="testi-avatar">B</span><div><strong>Budi Santoso</strong><small>Pelanggan</small></div></div></div>
+        <div class="testi-card"><div class="testi-stars">★★★★★</div><p>"Harga terjangkau tapi kualitas bintang lima!"</p><div class="testi-author"><span class="testi-avatar">D</span><div><strong>Dewi Kusuma</strong><small>Pelanggan</small></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Banner -->
+  <section class="section-cta">
+    <div class="container">
+      <div class="cta-box">
+        <div class="cta-content">
+          <h2>Siap Pesan Sekarang?</h2>
+          <p>Minimum order 10 porsi. Antar gratis area <span id="ctaAreaText">Purwokerto</span> & sekitarnya.</p>
+        </div>
+        <button class="btn-primary" onclick="showPage('menu')">Mulai Pesan</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-logo-text">Nok Ayun'e <span>Kuliner</span></div>
+          <p>Catering rumahan dengan cita rasa istimewa. Dibuat dengan cinta untuk keluarga Anda.</p>
+          <div class="social-links" id="footerSocial">
+            <a class="social-link" href="#" id="socialIg" target="_blank" title="Instagram">📷</a>
+            <a class="social-link" href="#" id="socialTt" target="_blank" title="TikTok">🎵</a>
+            <a class="social-link" href="#" id="socialFb" target="_blank" title="Facebook">📘</a>
+          </div>
+        </div>
+        <div class="footer-links">
+          <h4>Menu</h4>
+          <a href="#" onclick="filterMenu('nasi-box');showPage('menu')">Nasi Box</a>
+          <a href="#" onclick="filterMenu('lauk');showPage('menu')">Lauk Pauk</a>
+          <a href="#" onclick="filterMenu('snack');showPage('menu')">Snack & Kue</a>
+        </div>
+        <div class="footer-links">
+          <h4>Info</h4>
+          <a href="#" onclick="showPage('about')">Tentang Kami</a>
+          <a href="#" onclick="showPage('contact')">Kontak</a>
+          <a href="#" onclick="showPage('admin-login')">Admin</a>
+        </div>
+        <div class="footer-contact">
+          <h4>Hubungi Kami</h4>
+          <p>📱 WhatsApp: <a id="footerWaLink" href="https://wa.me/6281234567890" target="_blank">0812-3456-7890</a></p>
+          <p>📍 <span id="footerAddress">Purwokerto, Jawa Tengah</span></p>
+          <p>⏰ Buka: 07.00 – 20.00 WIB</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2025 NokAyune. Dibuat dengan 🍃 untuk keluarga Indonesia.</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- ===== MENU PAGE ===== -->
+<div id="page-menu" class="page">
+  <div class="page-hero-sm">
+    <div class="container">
+      <p class="eyebrow">Pilihan Lengkap</p>
+      <h1>Menu NokAyune</h1>
+      <p>Fresh, halal, dan dibuat dengan bahan pilihan setiap hari</p>
+    </div>
+  </div>
+  <div class="container menu-page-container">
+    <div class="breadcrumb"><a href="#" onclick="showPage('home')">Beranda</a><span>/</span><span>Menu</span></div>
+    <div class="menu-search-wrap">
+      <input type="text" id="menuSearch" placeholder="🔍 Cari menu... (nasi box, ayam, teh...)" oninput="searchMenu(this.value)"/>
+      <span class="search-icon">🔍</span>
+      <button class="search-clear" onclick="document.getElementById('menuSearch').value='';searchMenu('');">✕</button>
+    </div>
+    <p class="menu-region-note" id="menuRegionNote"></p>
+    <div class="menu-filters">
+      <button class="filter-btn active" onclick="filterMenu('all', this)">Semua</button>
+      <button class="filter-btn" onclick="filterMenu('nasi-box', this)">🍱 Nasi Box</button>
+      <button class="filter-btn" onclick="filterMenu('lauk', this)">🍗 Lauk Pauk</button>
+      <button class="filter-btn" onclick="filterMenu('snack', this)">🧁 Snack & Kue</button>
+      <button class="filter-btn" onclick="filterMenu('minuman', this)">🥤 Minuman</button>
+    </div>
+    <div class="menu-grid full" id="fullMenuGrid"></div>
+  </div>
+</div>
+
+<!-- ===== CUSTOMER LOGIN PAGE ===== -->
+<div id="page-customer-login" class="page">
+  <div class="admin-login-wrap">
+    <div class="admin-login-box">
+      <div style="text-align:center;font-size:3rem;margin-bottom:16px;">👤</div>
+      <h2 class="admin-login-title" id="custLoginTitle">Masuk</h2>
+      <p style="margin-bottom:24px;" id="custLoginSubtitle">Pantau semua pesananmu dengan mudah</p>
+      <div class="form-group" id="custNameGroup" style="display:none;"><label>Nama Lengkap</label><input type="text" id="cust-name" placeholder="Nama Anda"/></div>
+      <div class="form-group"><label>No. WhatsApp</label><input type="tel" id="cust-phone" placeholder="08xxxxxxxxxx"/></div>
+      <div class="form-group"><label>PIN (4 digit)</label><input type="password" id="cust-pin" placeholder="****" maxlength="4" inputmode="numeric" pattern="[0-9]*"/></div>
+      <div id="custError" style="color:var(--clay);font-size:0.84rem;margin-bottom:12px;min-height:20px;"></div>
+      <button class="btn-primary full" id="custSubmitBtn" onclick="customerLogin()">Masuk</button>
+      <p style="text-align:center;margin-top:12px;font-size:0.84rem;color:var(--gray);" id="custToggleText">
+        Belum punya akun? <a href="#" onclick="toggleCustomerAuthMode(); return false;">Daftar di sini</a>
+      </p>
+      <p style="text-align:center;margin-top:6px;font-size:0.8rem;color:var(--gray);">
+        Lupa PIN? <a href="#" onclick="showPage('contact')">Hubungi kami</a>, sebutkan nomor WhatsApp yang terdaftar.
+      </p>
+      <a href="#" onclick="showPage('home')" class="back-home">← Kembali ke Beranda</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MY ORDERS PAGE ===== -->
+<div id="page-myorders" class="page">
+  <div class="page-hero-sm">
+    <div class="container"><p class="eyebrow">Akun Saya</p><h1>Pesanan Saya</h1></div>
+  </div>
+  <div class="container" style="padding:40px 0 80px;max-width:720px;">
+    <div id="myOrdersList"></div>
+  </div>
+</div>
+
+<!-- ===== ABOUT PAGE ===== -->
+<div id="page-about" class="page">
+  <div class="page-hero-sm">
+    <div class="container">
+      <p class="eyebrow">Cerita Kami</p>
+      <h1>Tentang NokAyune</h1>
+    </div>
+  </div>
+  <div class="container about-container">
+    <div class="about-grid">
+      <div class="about-img-wrap">
+        <div class="leaf-frame about-img-placeholder">🍳</div>
+      </div>
+      <div class="about-text">
+        <p class="eyebrow">Sejak 2019</p>
+        <h2>Dapur Kecil, <em>Cinta Besar</em></h2>
+        <p>NokAyune lahir dari kecintaan Bu Ayune terhadap masakan rumahan yang tidak pernah lekang oleh waktu. Berawal dari pesanan kecil-kecilan di lingkungan tetangga, kini NokAyune melayani ratusan pelanggan di seluruh Purwokerto.</p>
+        <p>Setiap masakan kami dibuat dengan bahan segar pilihan, tanpa pengawet, dan dimasak setiap hari. Kami percaya bahwa makanan terbaik adalah yang dibuat dengan kasih sayang – persis seperti masakan ibu di rumah.</p>
+        <div class="about-values">
+          <div class="value-item"><span>🌿</span><div><strong>100% Halal</strong><p>Semua bahan bersertifikat halal</p></div></div>
+          <div class="value-item"><span>🥬</span><div><strong>Bahan Segar</strong><p>Dibeli dari pasar setiap pagi</p></div></div>
+          <div class="value-item"><span>❤️</span><div><strong>Dibuat Sepenuh Hati</strong><p>Setiap porsi penuh perhatian</p></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ Section -->
+  <div class="faq-section container">
+    <h2>Pertanyaan Umum</h2>
+    <div class="faq-item"><div class="faq-question" onclick="this.parentElement.classList.toggle('open')">Berapa minimal pemesanan?</div><div class="faq-answer">Minimal 10 porsi per pesanan. Cocok untuk acara keluarga, arisan, atau makan siang kantor.</div></div>
+    <div class="faq-item"><div class="faq-question" onclick="this.parentElement.classList.toggle('open')">Jam operasional NokAyune?</div><div class="faq-answer">Kami buka setiap hari Senin–Minggu, jam 07.00–20.00 WIB. Termasuk hari libur nasional.</div></div>
+    <div class="faq-item"><div class="faq-question" onclick="this.parentElement.classList.toggle('open')">Apakah ada antar ke luar kota?</div><div class="faq-answer">Saat ini kami melayani area Purwokerto dan sekitarnya. Untuk luar kota, silakan hubungi via WhatsApp untuk konsultasi khusus.</div></div>
+    <div class="faq-item"><div class="faq-question" onclick="this.parentElement.classList.toggle('open')">Bagaimana cara pembayaran?</div><div class="faq-answer">Pembayaran via QRIS (GoPay, OVO, Dana, ShopeePay, dan semua mobile banking). Nominal otomatis terkunci sesuai total belanja Anda.</div></div>
+    <div class="faq-item"><div class="faq-question" onclick="this.parentElement.classList.toggle('open')">Apakah bisa request menu khusus?</div><div class="faq-answer">Tentu! Hubungi kami via WhatsApp untuk menu custom atau permintaan diet khusus (vegetarian, rendah garam, dll).</div></div>
+  </div>
+</div>
+
+<!-- ===== CONTACT PAGE ===== -->
+<div id="page-contact" class="page">
+  <div class="page-hero-sm">
+    <div class="container">
+      <p class="eyebrow">Hubungi Kami</p>
+      <h1>Kontak & Lokasi</h1>
+    </div>
+  </div>
+  <div class="container contact-container">
+    <div class="contact-grid">
+      <div class="contact-info">
+        <h2>Informasi Kontak</h2>
+        <div class="contact-item"><div class="contact-icon">📱</div><div><h4>WhatsApp</h4><p><a id="contactWaLink" href="https://wa.me/6281234567890">0812-3456-7890</a></p><small>Respon cepat 07.00-20.00 WIB</small></div></div>
+        <div class="contact-item"><div class="contact-icon">📍</div><div><h4>Lokasi</h4><p id="contactAddress">Purwokerto, Jawa Tengah</p><small>Melayani area <span id="contactAreaText">Purwokerto</span> & sekitarnya</small></div></div>
+        <div class="contact-item"><div class="contact-icon">⏰</div><div><h4>Jam Operasional</h4><p>Senin – Minggu: 07.00 – 20.00 WIB</p><small>Termasuk hari libur nasional</small></div></div>
+        <div class="contact-item"><div class="contact-icon">📦</div><div><h4>Minimum Order</h4><p>10 porsi per pesanan</p><small>Antar gratis area Purwokerto</small></div></div>
+      </div>
+      <div class="contact-form-wrap">
+        <h2>Kirim Pesan</h2>
+        <div class="contact-form">
+          <div class="form-group"><label>Nama Lengkap</label><input type="text" placeholder="Nama Anda"/></div>
+          <div class="form-group"><label>No. WhatsApp</label><input type="tel" placeholder="08xxxxxxxxxx"/></div>
+          <div class="form-group"><label>Pesan</label><textarea rows="4" placeholder="Ada yang ingin ditanyakan?"></textarea></div>
+          <button class="btn-primary" onclick="submitContactForm()">Kirim via WhatsApp</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TRACK ORDER PAGE ===== -->
+<div id="page-track" class="page">
+  <div class="page-hero-sm">
+    <div class="container">
+      <p class="eyebrow">Cek Status</p>
+      <h1>Lacak Pesanan</h1>
+      <p>Masukkan nomor pesanan dan nomor WhatsApp yang dipakai saat checkout.</p>
+    </div>
+  </div>
+  <div class="container" style="padding:48px 0 80px;max-width:560px;">
+    <div class="contact-form">
+      <div class="form-group"><label>Nomor Pesanan</label><input type="text" id="tr-id" placeholder="Contoh: NA123456"/></div>
+      <div class="form-group"><label>No. WhatsApp</label><input type="tel" id="tr-phone" placeholder="08xxxxxxxxxx"/></div>
+      <button class="btn-primary full" onclick="trackOrder()">Cek Status Pesanan</button>
+    </div>
+    <div id="trackResult" style="margin-top:24px;"></div>
+  </div>
+</div>
+
+<!-- ===== CART PAGE ===== -->
+<div id="page-cart" class="page">
+  <div class="page-hero-sm">
+    <div class="container">
+      <p class="eyebrow">Pesanan Anda</p>
+      <h1>Keranjang Belanja</h1>
+      <div class="step-indicator" id="stepIndicator1">
+        <div class="step-dot active"><div class="dot">1</div><div class="dot-label">Keranjang</div></div>
+        <div class="step-line"></div>
+        <div class="step-dot"><div class="dot">2</div><div class="dot-label">Data Diri</div></div>
+        <div class="step-line"></div>
+        <div class="step-dot"><div class="dot">3</div><div class="dot-label">Bayar</div></div>
+        <div class="step-line"></div>
+        <div class="step-dot"><div class="dot">4</div><div class="dot-label">Selesai</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="container cart-container">
+    <div class="cart-grid">
+      <div class="cart-items" id="cartItems"></div>
+      <div class="cart-summary">
+        <h3>Ringkasan Pesanan</h3>
+        <div class="summary-rows" id="summaryRows"></div>
+        <div class="summary-total"><span>Total</span><span id="cartTotal">Rp 0</span></div>
+        <button class="btn-primary full" id="checkoutBtn" onclick="showPage('checkout')">Lanjut ke Pembayaran →</button>
+        <button class="btn-ghost full" onclick="showPage('menu')">← Tambah Menu</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CHECKOUT PAGE ===== -->
+<div id="page-checkout" class="page">
+  <div class="page-hero-sm">
+    <div class="container">
+      <p class="eyebrow">Hampir Selesai</p>
+      <h1>Detail Pengiriman</h1>
+      <div class="step-indicator" id="stepIndicator2">
+        <div class="step-dot done"><div class="dot">✓</div><div class="dot-label">Keranjang</div></div>
+        <div class="step-line done"></div>
+        <div class="step-dot active"><div class="dot">2</div><div class="dot-label">Data Diri</div></div>
+        <div class="step-line"></div>
+        <div class="step-dot"><div class="dot">3</div><div class="dot-label">Bayar</div></div>
+        <div class="step-line"></div>
+        <div class="step-dot"><div class="dot">4</div><div class="dot-label">Selesai</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="container checkout-container">
+    <div class="checkout-grid">
+      <div class="checkout-form-wrap">
+        <h3>Informasi Pemesan</h3>
+        <div class="form-group" id="fg-co-name"><label>Nama Lengkap *</label><input type="text" id="co-name" placeholder="Nama penerima" oninput="autoSaveAddress()"/><p class="field-error-msg">Nama penerima wajib diisi</p></div>
+        <div class="form-group" id="fg-co-phone"><label>No. WhatsApp *</label><input type="tel" id="co-phone" placeholder="08xxxxxxxxxx"/><p class="field-error-msg">Nomor WhatsApp wajib diisi</p></div>
+        <div class="saved-addresses" id="savedAddresses"></div>
+        <div class="form-group" id="fg-co-address"><label>Alamat Lengkap *</label><textarea id="co-address" rows="3" placeholder="Jl. ..., RT/RW, Kelurahan, Kecamatan, Kota"></textarea><p class="field-error-msg">Alamat pengiriman wajib diisi</p></div>
+        <div class="form-group" id="fg-co-time"><label>Waktu Pengiriman *</label><input type="datetime-local" id="co-time"/><p class="field-error-msg">Pilih waktu pengiriman</p></div>
+        <p id="cutoffNotice" style="font-size:0.82rem;color:var(--clay);margin-top:-12px;margin-bottom:16px;display:none;">⏰ Pesanan hanya diterima sebelum jam <strong id="cutoffTimeText">20:00</strong>. Di atas jam itu, silakan pesan untuk besok.</p>
+        <div class="form-group"><label>Catatan (opsional)</label>
+          <div class="quick-notes" id="quickNotes">
+            <span class="quick-note" onclick="addQuickNote('Kurangi pedas')">🌶️ Kurangi pedas</span>
+            <span class="quick-note" onclick="addQuickNote('Tanpa sambal')">🚫 Tanpa sambal</span>
+            <span class="quick-note" onclick="addQuickNote('Pisah lauk & nasi')">📦 Pisah lauk & nasi</span>
+            <span class="quick-note" onclick="addQuickNote('Tolong dibungkus rapi')">🎁 Bungkus rapi</span>
+            <span class="quick-note" onclick="addQuickNote('Porsi besar ya')">🍽️ Porsi besar</span>
+          </div>
+          <textarea id="co-notes" rows="2" placeholder="Contoh: tolong tidak pedas, atau minta dipisah lauknya"></textarea>
+        </div>
+      </div>
+      <div class="checkout-summary">
+        <h3>Ringkasan Pesanan</h3>
+        <div id="checkoutItems"></div>
+        <div class="summary-total"><span>Total Bayar</span><span id="checkoutTotal">Rp 0</span></div>
+        <div class="rec-tray" id="recTray"></div>
+        <button class="btn-primary full" onclick="goToPayment()">Pilih Metode Bayar →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAYMENT PAGE ===== -->
+<div id="page-payment" class="page">
+  <div class="page-hero-sm">
+    <div class="container">
+      <p class="eyebrow">Langkah Terakhir</p>
+      <h1>Pembayaran</h1>
+      <div class="step-indicator" id="stepIndicator3">
+        <div class="step-dot done"><div class="dot">✓</div><div class="dot-label">Keranjang</div></div>
+        <div class="step-line done"></div>
+        <div class="step-dot done"><div class="dot">✓</div><div class="dot-label">Data Diri</div></div>
+        <div class="step-line done"></div>
+        <div class="step-dot active"><div class="dot">3</div><div class="dot-label">Bayar</div></div>
+        <div class="step-line"></div>
+        <div class="step-dot"><div class="dot">4</div><div class="dot-label">Selesai</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="container payment-container">
+    <div class="payment-box">
+      <!-- Locked amount display -->
+      <div class="pay-amount-display">
+        <p class="amount-label">Total Pembayaran</p>
+        <div class="amount-value" id="payAmount">Rp 0</div>
+      </div>
+      <div class="locked-badge"><span class="lock-icon">🔒</span> Nominal sudah terkunci — tidak bisa diubah</div>
+
+      <!-- QR Code Area -->
+      <div class="qris-wrap" id="qrisWrap">
+        <div class="qris-code" id="qrisCodeBox">
+          <div class="qris-loading"><div class="spinner"></div><p style="margin-top:12px;">Menyiapkan QRIS...</p></div>
+        </div>
+        <p class="qris-name" id="qrisMerchantName">NokAyune</p>
+        <p class="qris-sub" id="qrisSub">Scan pakai GoPay, OVO, Dana, ShopeePay, atau mobile banking apa saja</p>
+        <div class="qris-logos" id="qrisLogos">
+          <span class="qris-logo-item">GoPay</span>
+          <span class="qris-logo-item">OVO</span>
+          <span class="qris-logo-item">Dana</span>
+          <span class="qris-logo-item">ShopeePay</span>
+          <span class="qris-logo-item">Bank apa saja</span>
+        </div>
+      </div>
+
+      <!-- Payment guide -->
+      <div class="pay-guide" id="payGuide">
+        <div class="pay-guide-step"><span class="guide-num">1</span><span class="guide-icon">📱</span><p>Buka e-wallet atau m-banking</p></div>
+        <div class="pay-guide-step"><span class="guide-num">2</span><span class="guide-icon">📷</span><p>Scan kode QR di atas — nominal otomatis</p></div>
+        <div class="pay-guide-step"><span class="guide-num">3</span><span class="guide-icon">✅</span><p>Bayar & screenshot buktinya</p></div>
+      </div>
+
+      <!-- Proof upload -->
+      <div class="proof-upload" id="proofUpload" onclick="document.getElementById('proofFile').click()">
+        <input type="file" id="proofFile" accept="image/*" style="display:none" onchange="handleProofUpload(event)"/>
+        <div id="proofPlaceholder">📸 Klik di sini untuk upload bukti bayar (opsional)</div>
+      </div>
+
+      <button class="btn-primary full" onclick="confirmPayment()">✅ Saya Sudah Bayar — Konfirmasi Pesanan</button>
+      <p class="pay-note" id="payNote">Tim kami akan cek pembayaran Anda dan konfirmasi via WhatsApp dalam 15-30 menit.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SUCCESS PAGE ===== -->
+<div id="page-success" class="page">
+  <div class="container success-container">
+    <div class="step-indicator" id="stepIndicator4" style="margin-bottom:12px;">
+      <div class="step-dot done"><div class="dot">✓</div><div class="dot-label">Keranjang</div></div>
+      <div class="step-line done"></div>
+      <div class="step-dot done"><div class="dot">✓</div><div class="dot-label">Data Diri</div></div>
+      <div class="step-line done"></div>
+      <div class="step-dot done"><div class="dot">✓</div><div class="dot-label">Bayar</div></div>
+      <div class="step-line done"></div>
+      <div class="step-dot done"><div class="dot">✓</div><div class="dot-label">Selesai</div></div>
+    </div>
+    <div class="success-box">
+      <div class="success-icon">🎉</div>
+      <h2>Pesanan Diterima!</h2>
+      <p>Terima kasih telah memesan di <strong>NokAyune</strong>.<br/>Konfirmasi pesanan Anda akan segera diproses oleh tim kami.</p>
+      <div class="success-order" id="successOrder"></div>
+      <div class="share-bar">
+        <span style="font-size:0.82rem;font-weight:600;color:var(--gray);">Bagikan pesanan:</span>
+        <button class="share-btn wa" onclick="shareToWA()">💬 WhatsApp</button>
+        <button class="share-btn copy" onclick="copyOrderText()">📋 Salin Detail</button>
+      </div>
+      <div class="countdown-box" id="countdownBox">
+        <p class="countdown-label">⏱ Estimasi konfirmasi dalam</p>
+        <div class="countdown-time" id="countdownTime">15:00</div>
+      </div>
+      <div class="success-next">
+        <p>📱 Tim NokAyune akan menghubungi Anda via WhatsApp dalam <strong>15-30 menit</strong> untuk konfirmasi pesanan.</p>
+        <p>🕐 Pastikan WhatsApp Anda aktif dan dapat menerima pesan.</p>
+      </div>
+      <div class="success-cta">
+        <button class="btn-primary" onclick="openWA()">Buka WhatsApp Owner</button>
+        <button class="btn-outline" onclick="printInvoice()">🖨️ Cetak Invoice</button>
+        <button class="btn-outline" onclick="resetOrder()">🔄 Pesan Lagi</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADMIN LOGIN PAGE ===== -->
+<div id="page-admin-login" class="page">
+  <div class="admin-login-wrap">
+    <div class="admin-login-box">
+      <div class="admin-logo"><img src="/assets/logo-login.png" alt="NokAyune Kuliner"/></div>
+      <h2 class="admin-login-title">NokAyune Admin</h2>
+      <p>Masuk ke dashboard pengelolaan</p>
+      <div class="form-group"><label>Username</label><input type="text" id="adminUser" placeholder="admin"/></div>
+      <div class="form-group"><label>Password</label><input type="password" id="adminPass" placeholder="••••••••"/></div>
+      <div class="admin-error" id="adminError"></div>
+      <button class="btn-primary full" onclick="adminLogin()">Masuk</button>
+      <a href="#" onclick="showPage('home')" class="back-home">← Kembali ke Beranda</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADMIN DASHBOARD ===== -->
+<div id="page-admin" class="page">
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="admin-brand"><span>NokAyune</span></div>
+      <nav class="admin-nav">
+        <a href="#" class="admin-nav-item active" onclick="adminTab('orders', this)">📋 Pesanan</a>
+        <a href="#" class="admin-nav-item" onclick="adminTab('menu', this)">🍱 Menu</a>
+        <a href="#" class="admin-nav-item" onclick="adminTab('stats', this)">📊 Statistik</a>
+        <a href="#" class="admin-nav-item" onclick="adminTab('settings', this)">⚙️ Pengaturan</a>
+        <a href="#" class="admin-nav-item" onclick="adminTab('messages', this)">✉️ Pesan Masuk</a>
+        <a href="#" class="admin-nav-item kitchen-link" onclick="showPage('kitchen')">🍳 Tampilan Dapur</a>
+      </nav>
+      <button class="admin-logout" onclick="adminLogout()">🚪 Keluar</button>
+    </aside>
+    <main class="admin-main">
+      <!-- Orders Tab -->
+      <div id="admin-orders" class="admin-tab active">
+        <div class="admin-header">
+          <h2>Manajemen Pesanan</h2>
+          <div class="admin-filter" style="display:flex;gap:10px;flex-wrap:wrap;">
+            <select onchange="filterOrders(this.value)">
+              <option value="all">Semua Status</option>
+              <option value="pending">Menunggu</option>
+              <option value="confirmed">Dikonfirmasi</option>
+              <option value="cooking">Dimasak</option>
+              <option value="delivered">Dikirim</option>
+              <option value="done">Selesai</option>
+              <option value="cancelled">Dibatalkan</option>
+            </select>
+            <select id="ordersRegionFilter" onchange="filterOrdersByRegion(this.value)">
+              <option value="all">Semua Wilayah</option>
+            </select>
+          </div>
+        </div>
+        <div class="orders-grid" id="adminOrdersGrid"></div>
+        <div id="ordersPagination" style="display:flex;gap:8px;justify-content:center;margin-top:24px;flex-wrap:wrap;"></div>
+      </div>
+      <!-- Menu Tab -->
+      <div id="admin-menu" class="admin-tab">
+        <div class="admin-header">
+          <h2>Manajemen Menu</h2>
+          <button class="btn-primary" onclick="showAddMenu()">+ Tambah Menu</button>
+        </div>
+        <div id="adminMenuForm" class="admin-form-panel" style="display:none">
+          <h3 id="menuFormTitle">Tambah Menu Baru</h3>
+          <div class="form-row">
+            <div class="form-group"><label>Nama Menu</label><input type="text" id="mf-name" placeholder="Nasi Box Spesial"/></div>
+            <div class="form-group"><label>Kategori</label><select id="mf-cat"><option value="nasi-box">Nasi Box</option><option value="lauk">Lauk Pauk</option><option value="snack">Snack & Kue</option><option value="minuman">Minuman</option></select></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Harga</label><input type="number" id="mf-price" placeholder="25000"/></div>
+            <div class="form-group"><label>Emoji Icon (cadangan jika tanpa foto)</label><input type="text" id="mf-emoji" placeholder="🍱"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Stok (kosongkan jika tak terbatas)</label><input type="number" id="mf-stock" min="0" placeholder="Misal: 20"/></div>
+            <div class="form-group"><label>Wilayah</label><select id="mf-region"><option value="">Semua Wilayah</option></select></div>
+          </div>
+          <div class="form-group"><label>Foto Menu (opsional, jpg/png/webp maks 3MB)</label><input type="file" id="mf-photo" accept=".jpg,.jpeg,.png,.webp"/><div class="upload-preview" id="uploadPreview"></div></div>
+          <div class="form-group"><label>Deskripsi</label><textarea id="mf-desc" rows="2" placeholder="Deskripsi menu..."></textarea></div>
+          <div class="form-group"><label>Status</label><select id="mf-status"><option value="available">Tersedia</option><option value="soldout">Habis</option></select><p style="font-size:0.78rem;color:var(--gray);margin-top:6px;">Kalau stok diisi angka, status ini otomatis mengikuti stok.</p></div>
+          <div class="form-actions">
+            <button class="btn-primary" onclick="saveMenu()">Simpan</button>
+            <button class="btn-ghost" onclick="cancelMenuForm()">Batal</button>
+          </div>
+        </div>
+        <div class="admin-menu-grid" id="adminMenuGrid"></div>
+      </div>
+      <!-- Stats Tab -->
+      <div id="admin-stats" class="admin-tab">
+        <div class="admin-header">
+          <h2>Statistik</h2>
+          <div class="admin-filter">
+            <select id="statsRegionFilter" onchange="renderStats(this.value)">
+              <option value="all">Semua Wilayah</option>
+            </select>
+            <button class="btn-outline" onclick="exportOrdersCSV()" style="padding:9px 18px;font-size:0.84rem;">📥 Export CSV</button>
+          </div>
+        </div>
+        <div class="stats-cards">
+          <div class="stat-card green"><div class="stat-card-num" id="st-total">0</div><div>Total Pesanan</div></div>
+          <div class="stat-card blue"><div class="stat-card-num" id="st-revenue">Rp 0</div><div>Total Pendapatan</div></div>
+          <div class="stat-card orange"><div class="stat-card-num" id="st-pending">0</div><div>Menunggu Konfirmasi</div></div>
+          <div class="stat-card purple"><div class="stat-card-num" id="st-items">0</div><div>Item Menu Aktif</div></div>
+          <div class="stat-card clay"><div class="stat-card-num" id="st-lowstock">0</div><div>Stok Menipis (≤5)</div></div>
+        </div>
+        <div class="stats-section">
+          <h3>Pendapatan 7 Hari Terakhir</h3>
+          <div style="background:var(--card);border-radius:var(--radius);padding:20px;border:1px solid var(--card-border);margin-bottom:32px;">
+            <canvas id="revenueChart" height="90"></canvas>
+          </div>
+        </div>
+        <div class="stats-section">
+          <h3>Menu Terlaris</h3>
+          <div id="topMenuList"></div>
+        </div>
+      </div>
+      <!-- Settings Tab -->
+      <div id="admin-settings" class="admin-tab">
+        <div class="admin-header"><h2>Pengaturan</h2></div>
+        <div class="settings-form">
+          <h3>Informasi Toko</h3>
+          <div class="form-group"><label>Nama Toko</label><input type="text" id="set-store_name"/></div>
+          <div class="form-group"><label>No. WhatsApp Owner</label><input type="tel" id="set-owner_wa"/></div>
+          <div class="form-group"><label>Alamat Toko</label><input type="text" id="set-address"/></div>
+          <div class="form-group"><label>Minimum Order (porsi)</label><input type="number" id="set-min_order"/></div>
+          <div class="form-row">
+            <div class="form-group"><label>Jam Buka</label><input type="text" id="set-open_hours" placeholder="07:00 – 20:00 WIB"/></div>
+            <div class="form-group"><label>Jam Tutup Pesanan</label><input type="time" id="set-cutoff_time"/></div>
+          </div>
+          <button class="btn-primary" onclick="saveSettings()">Simpan Pengaturan</button>
+        </div>
+        <div class="settings-form" style="margin-top:24px;" id="qrisPanel">
+          <h3>Pembayaran QRIS <small style="font-size:0.7rem;color:var(--gray);font-weight:500;">(khusus owner)</small></h3>
+          <p style="font-size:0.85rem;margin-bottom:12px;">Tidak perlu akun payment gateway berbayar. Tempel teks QRIS statis milik kamu sendiri di sini — nominal akan otomatis terkunci sesuai total belanja pelanggan, jadi tidak bisa diketik lebih kecil dari harga asli.</p>
+          <details style="margin-bottom:18px;font-size:0.83rem;color:var(--gray);">
+            <summary style="cursor:pointer;font-weight:600;color:var(--ink);">Cara dapetin teks QRIS-nya ▾</summary>
+            <ol style="margin:10px 0 0 18px;line-height:1.85;">
+              <li>Buka aplikasi pemindai QR apa saja di HP (banyak yang gratis di Play Store/App Store, cari "QR code scanner").</li>
+              <li>Scan gambar QRIS kamu yang biasa dipajang / dari aplikasi e-wallet atau m-banking kamu (yang statis, bukan yang sudah ada nominalnya).</li>
+              <li>Hasilnya berupa teks panjang diawali <code>000201...</code> — salin (copy) semua teks itu.</li>
+              <li>Tempel di kotak bawah ini, lalu klik "Simpan & Tes QRIS" untuk lihat pratinjaunya.</li>
+            </ol>
+          </details>
+          <div class="form-group"><label>Teks QRIS Statis</label><textarea id="set-qris_static" rows="4" placeholder="000201010211..." style="font-family:monospace;font-size:0.8rem;"></textarea></div>
+          <button class="btn-primary" onclick="saveQrisSettings()">Simpan & Tes QRIS</button>
+          <div id="qrisTestResult" style="margin-top:20px;"></div>
+        </div>
+        <div class="settings-form" style="margin-top:24px;" id="bannerPanel">
+          <h3>Hero Banner & Promo <small style="font-size:0.7rem;color:var(--gray);font-weight:500;">(khusus owner)</small></h3>
+          <p style="font-size:0.85rem;margin-bottom:16px;">Upload gambar banner besar untuk homepage & atur teks promo.</p>
+          <div class="form-group"><label>Gambar Banner (URL atau upload)</label><input type="text" id="set-banner_image" placeholder="https://... atau kosongkan"/></div>
+          <div class="form-group"><label>Link Banner (klik banner ke mana)</label><input type="text" id="set-banner_link" placeholder="https://... atau #menu"/></div>
+          <div class="form-group"><label>Teks Promo (muncul di banner kuning atas)</label><input type="text" id="set-promo_text" placeholder="🎉 Promo spesial! Pesan hari ini dapat diskon!"/></div>
+          <div class="form-group"><label>Link Promo</label><input type="text" id="set-promo_link" placeholder="https://..."/></div>
+          <div class="form-group"><label>Instagram</label><input type="text" id="set-social_ig" placeholder="https://instagram.com/nokayune"/></div>
+          <div class="form-group"><label>TikTok</label><input type="text" id="set-social_tt" placeholder="https://tiktok.com/@nokayune"/></div>
+          <button class="btn-primary" onclick="saveBannerSettings()">Simpan Banner & Promo</button>
+        </div>
+        <div class="settings-form" style="margin-top:24px;" id="regionsPanel">
+          <h3>Kelola Wilayah <small style="font-size:0.7rem;color:var(--gray);font-weight:500;">(khusus owner)</small></h3>
+          <p style="font-size:0.85rem;margin-bottom:16px;">Tiap wilayah punya menu, stok, dan nomor WhatsApp sendiri — cocok kalau NokAyune buka dapur di lebih dari satu kota.</p>
+          <div id="regionsList" style="margin-bottom:20px;"></div>
+          <div class="form-row">
+            <div class="form-group"><label>Nama Wilayah</label><input type="text" id="region-name" placeholder="Contoh: Purbalingga"/></div>
+            <div class="form-group"><label>No. WhatsApp Wilayah</label><input type="tel" id="region-wa" placeholder="628xxxxxxxxxx"/></div>
+          </div>
+          <div class="form-group"><label>Alamat Wilayah</label><input type="text" id="region-address" placeholder="Contoh: Purbalingga, Jawa Tengah"/></div>
+          <button class="btn-primary" onclick="addRegion()">+ Tambah Wilayah</button>
+        </div>
+        <div class="settings-form" style="margin-top:24px;">
+          <h3>Ganti Password Saya</h3>
+          <div class="form-group"><label>Password Saat Ini</label><input type="password" id="pw-current"/></div>
+          <div class="form-group"><label>Password Baru (min. 6 karakter)</label><input type="password" id="pw-new"/></div>
+          <button class="btn-primary" onclick="changePassword()">Ganti Password</button>
+        </div>
+        <div class="settings-form" style="margin-top:24px;" id="staffPanel">
+          <h3>Kelola Akun Staf <small style="font-size:0.7rem;color:var(--gray);font-weight:500;">(khusus owner)</small></h3>
+          <div id="staffList" style="margin-bottom:20px;"></div>
+          <div class="form-row">
+            <div class="form-group"><label>Nama</label><input type="text" id="staff-name"/></div>
+            <div class="form-group"><label>Username</label><input type="text" id="staff-username"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Password</label><input type="password" id="staff-password"/></div>
+            <div class="form-group"><label>Peran</label><select id="staff-role"><option value="kasir">Kasir</option><option value="owner">Owner</option></select></div>
+          </div>
+          <button class="btn-primary" onclick="addStaff()">+ Tambah Staf</button>
+        </div>
+        <div class="settings-form" style="margin-top:24px;" id="customersPanel">
+          <h3>Reset PIN Pelanggan <small style="font-size:0.7rem;color:var(--gray);font-weight:500;">(khusus owner)</small></h3>
+          <p style="font-size:0.85rem;margin-bottom:16px;">Kalau ada pelanggan lupa PIN akun mereka dan menghubungi kamu lewat WhatsApp, cari nomornya di sini lalu reset — PIN baru akan muncul untuk kamu sampaikan ke mereka.</p>
+          <div id="customersList" style="margin-bottom:16px;"></div>
+          <button class="btn-ghost" onclick="loadCustomersList()" style="width:auto;padding:10px 20px;">🔄 Muat Daftar Pelanggan</button>
+        </div>
+      </div>
+
+      <div id="admin-messages" class="admin-tab">
+        <div class="admin-header"><h2>Pesan Masuk</h2></div>
+        <p style="color:var(--gray);font-size:0.88rem;margin-bottom:20px;">Pesan dari form "Hubungi Kami" di halaman depan. Klik untuk tandai sudah dibaca.</p>
+        <div id="messagesList"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Kitchen Display -->
+<div id="page-kitchen" class="page">
+  <div class="kitchen-view">
+    <div class="kitchen-header">
+      <div><h1>🍳 Dapur NokAyune</h1></div>
+      <div class="kitchen-time" id="kitchenClock"></div>
+    </div>
+    <div class="kitchen-grid" id="kitchenGrid"></div>
+    <div class="kitchen-refresh" id="kitchenRefresh">🔄 Auto-refresh setiap 30 detik</div>
+  </div>
+</div>
+
+<div id="toastStack" aria-live="polite"></div>
+
+<!-- Floating WhatsApp Button -->
+<a class="float-wa" id="floatWA" href="#" target="_blank" aria-label="Chat WhatsApp" title="Chat via WhatsApp">
+  💬
+  <span class="wa-tooltip">Chat Kami!</span>
+</a>
+
+<div class="mobile-cart-bar" id="mobileCartBar">
+  <div class="mc-info">Keranjang <span class="mc-total" id="mcTotal">Rp 0</span></div>
+  <button class="btn-primary" onclick="showPage('cart')">Lihat Keranjang →</button>
+</div>
+
+<!-- Custom Confirm Modal -->
+<div class="modal-overlay" id="confirmModal" style="display:none;">
+  <div class="modal-box">
+    <h3 id="confirmModalTitle">Konfirmasi</h3>
+    <p id="confirmModalMsg">Apakah Anda yakin?</p>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeConfirmModal(false)">Batal</button>
+      <button class="btn-primary" id="confirmModalOk" style="padding:12px 28px;">Ya, Lanjutkan</button>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
